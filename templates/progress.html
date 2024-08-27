@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processing Progress</title>
+    <script>
+        function updateProgress() {
+            fetch(`/status/{{ session_id }}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('progress-bar').value = data.percent;
+                    document.getElementById('progress-text').innerText = `Progress: ${data.percent.toFixed(2)}%`;
+                    document.getElementById('current-file').innerText = `Processing: ${data.filename}`;
+
+                    if (data.percent < 100) {
+                        setTimeout(updateProgress, 1000);  // Update every 1 second
+                    } else {
+                        document.getElementById('download-link').style.display = 'block';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        window.onload = function() {
+            updateProgress();
+        };
+    </script>
+</head>
+<body>
+    <h1>Processing Progress</h1>
+    <progress id="progress-bar" value="0" max="100"></progress>
+    <p id="progress-text">Progress: 0%</p>
+    <p id="current-file">Processing: No file</p>
+    <a id="download-link" href="/download/{{ session_id }}" style="display: none;">Download Processed PDFs</a>
+</body>
+</html>

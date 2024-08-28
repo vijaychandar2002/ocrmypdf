@@ -21,7 +21,7 @@ progress = {}  # To track progress of each session
 stop_signals = {}  # To handle stop signals for each session
 
 
-def process_pdfs(session_id, uploaded_file_paths):
+def process_pdfs(session_id, uploaded_file_paths, language_flag):
     processed_files = []
     total_files = len(uploaded_file_paths)
     progress[session_id] = {
@@ -63,7 +63,8 @@ def process_pdfs(session_id, uploaded_file_paths):
             with open(single_page_path, 'wb') as temp_pdf:
                 writer.write(temp_pdf)
 
-            ocrmypdf.ocr(single_page_path, single_page_path.replace('.pdf', '_ocr.pdf'))
+            # Use the language flag in the OCR command
+            ocrmypdf.ocr(single_page_path, single_page_path.replace('.pdf', '_ocr.pdf'), language=language_flag)
 
             ocr_progress = ((page_num + 1) / total_pages) * 100
             progress[session_id]['ocr_progress'] = ocr_progress
@@ -109,6 +110,14 @@ def index():
 def upload():
     session_id = session.get('session_id')
     uploaded_files = request.files.getlist("file[]")
+    selected_languages = request.form.getlist('languages')
+
+    # Ensure at least one language is selected
+    if not selected_languages:
+        return "Please select at least one language.", 400
+
+    # Prepare language flag for OCRmyPDF
+    language_flag = '+'.join(selected_languages)
     uploaded_file_paths = []
 
     for file in uploaded_files:
@@ -118,7 +127,7 @@ def upload():
             file.save(file_path)
             uploaded_file_paths.append(file_path)
 
-    thread = Thread(target=process_pdfs, args=(session_id, uploaded_file_paths))
+    thread = Thread(target=process_pdfs, args=(session_id, uploaded_file_paths, language_flag))
     thread.start()
 
     return redirect(url_for('progress_page', session_id=session_id))

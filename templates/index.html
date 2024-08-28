@@ -4,11 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OCR PDF Uploader</title>
+    <script>
+        function validateLanguageSelection() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const checkedCount = Array.from(checkboxes).filter(checkbox => checkbox.checked).length;
+            
+            // Ensure at least one checkbox is checked
+            if (checkedCount === 0) {
+                alert('Please select at least one language.');
+                return false;
+            }
+
+            // Ensure no more than three checkboxes are checked
+            if (checkedCount > 3) {
+                alert('You can select a maximum of three languages.');
+                return false;
+            }
+
+            return true;
+        }
+    </script>
 </head>
 <body>
     <h1>Upload PDFs for OCR</h1>
-    <form action="/upload" method="POST" enctype="multipart/form-data">
-        <input type="file" name="file[]" multiple accept="application/pdf">
+    <form action="/upload" method="POST" enctype="multipart/form-data" onsubmit="return validateLanguageSelection()">
+        <input type="file" name="file[]" multiple accept="application/pdf"><br><br>
+        <label><input type="checkbox" name="languages" value="eng" checked> English</label>
+        <label><input type="checkbox" name="languages" value="guj"> Gujarati</label>
+        <label><input type="checkbox" name="languages" value="hin"> Hindi</label><br><br>
         <button type="submit">Upload and Process</button>
     </form>
 </body>

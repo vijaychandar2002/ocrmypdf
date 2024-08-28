@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OCR PDF Uploader</title>
+    <title>Samyak Tech Labs OCR</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
     <script>
         function validateLanguageSelection() {
             const checkboxes = document.querySelectorAll('input[type="checkbox"]');
@@ -26,13 +27,25 @@
     </script>
 </head>
 <body>
-    <h1>Upload PDFs for OCR</h1>
-    <form action="/upload" method="POST" enctype="multipart/form-data" onsubmit="return validateLanguageSelection()">
-        <input type="file" name="file[]" multiple accept="application/pdf"><br><br>
-        <label><input type="checkbox" name="languages" value="eng" checked> English</label>
-        <label><input type="checkbox" name="languages" value="guj"> Gujarati</label>
-        <label><input type="checkbox" name="languages" value="hin"> Hindi</label><br><br>
-        <button type="submit">Upload and Process</button>
-    </form>
+    <div class="container">
+        <h1>Upload PDFs for OCR</h1>
+        <form action="/upload" method="POST" enctype="multipart/form-data" onsubmit="return validateLanguageSelection()">
+            <input type="file" name="file[]" multiple accept="application/pdf">
+            <div class="tooltip">
+                <span>ⓘ</span>
+                <span class="tooltiptext">The total size of all PDFs combined must be less than 100MB.</span>
+            </div>
+            <br><br>
+            <label><input type="checkbox" name="languages" value="eng" checked> English</label>
+            <label><input type="checkbox" name="languages" value="guj"> Gujarati</label>
+            <label><input type="checkbox" name="languages" value="hin"> Hindi</label>
+            <div class="tooltip">
+                <span>ⓘ</span>
+                <span class="tooltiptext">Selecting more languages than necessary may slow down processing.</span>
+            </div>
+            <br><br>
+            <button type="submit">Upload and Process</button>
+        </form>
+    </div>
 </body>
 </html>

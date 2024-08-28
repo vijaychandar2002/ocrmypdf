@@ -12,6 +12,7 @@
                     document.getElementById('progress-bar').value = data.percent;
                     document.getElementById('progress-text').innerText = `Progress: ${data.percent.toFixed(2)}%`;
                     document.getElementById('current-file').innerText = `Processing: ${data.filename}`;
+                    document.getElementById('ocr-progress').innerText = `OCR Progress: ${data.ocr_progress.toFixed(2)}%`;
 
                     if (data.percent < 100) {
                         setTimeout(updateProgress, 1000);  // Update every 1 second
@@ -32,6 +33,7 @@
     <progress id="progress-bar" value="0" max="100"></progress>
     <p id="progress-text">Progress: 0%</p>
     <p id="current-file">Processing: No file</p>
+    <p id="ocr-progress">OCR Progress: 0%</p>
     <a id="download-link" href="/download/{{ session_id }}" style="display: none;">Download Processed PDFs</a>
 </body>
 </html>

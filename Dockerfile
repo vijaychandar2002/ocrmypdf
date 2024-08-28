@@ -1,41 +1,24 @@
 # Use an official Python runtime as a parent image
-FROM python:3.12-slim
+FROM python:3.9-slim
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-
-# Install system dependencies
-RUN apt-get update && \
-    apt-get install -y \
-    tesseract-ocr \
-    tesseract-ocr-eng \
-    tesseract-ocr-guj \
-    tesseract-ocr-hin \
-    unzip \
-    wget \
-    nginx \
-    && apt-get clean
-
-# Install Ghostscript
-COPY ghostscript-9.54.0-linux-x86_64/gs-9540-linux-x86_64 /usr/local/bin/gs
-
-# Set the work directory
+# Set the working directory
 WORKDIR /app
 
-# Copy the requirements.txt file (create this file with your Python dependencies)
-COPY requirements.txt .
+# Copy the current directory contents into the container
+COPY . .
 
-# Install Python dependencies
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application files
-COPY . /app
+# Install Ghostscript
+COPY gs-9540-linux-x86_64 /usr/local/bin/gs
 
-# Copy the Nginx configuration file
-COPY nginx.conf /etc/nginx/nginx.conf
+# Install Tesseract with additional languages
+RUN apt-get update && \
+    apt-get install -y tesseract-ocr tesseract-ocr-guj tesseract-ocr-hin
 
-# Expose port 80 for Nginx and 5000 for Flask
-EXPOSE 80 5000
+# Expose port 80 for the app to run on
+EXPOSE 80
 
-# Start Nginx and Gunicorn
-CMD ["sh", "-c", "service nginx start && gunicorn -w 4 -b 0.0.0.0:5000 app:app"]
+# Run the Flask app
+CMD ["python", "app.py"]

@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  flask:
+    image: flaskappocr.azurecr.io/ocr-my-pdf-flask:latest
+    container_name: flask_app
+    volumes:
+      - .:/app
+    environment:
+      - FLASK_ENV=development
+    ports:
+      - "5000:5000" # Expose the port so you can access the Flask app from the host
+
+  nginx:
+    image: flaskappocr.azurecr.io/nginx:alpine
+    container_name: nginx_proxy
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+    depends_on:
+      - flask

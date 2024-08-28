@@ -5,6 +5,8 @@ from werkzeug.utils import secure_filename
 import zipfile
 from threading import Thread
 import uuid
+import PyPDF2
+import tempfile
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Needed to use sessions
@@ -19,26 +21,54 @@ os.makedirs(app.config['PROCESSED_FOLDER'], exist_ok=True)
 progress = {}  # To track progress of each session
 
 def process_pdfs(session_id, uploaded_file_paths):
-    """
-    Process PDFs for OCR and update the progress.
-    """
     processed_files = []
     total_files = len(uploaded_file_paths)
-    progress[session_id] = {'percent': 0, 'filename': ''}
+    progress[session_id] = {'percent': 0, 'filename': '', 'ocr_progress': 0}
 
     for i, file_path in enumerate(uploaded_file_paths):
         filename = os.path.basename(file_path)
         output_path = os.path.join(app.config['PROCESSED_FOLDER'], filename)
+        temp_folder = tempfile.mkdtemp()
 
-        # Update progress with the current file being processed
-        progress[session_id] = {'percent': (i / total_files) * 100, 'filename': filename}
+        # Get the number of pages
+        reader = PyPDF2.PdfReader(file_path)
+        total_pages = len(reader.pages)
 
-        # Run OCRmyPDF on the saved PDF
-        ocrmypdf.ocr(file_path, output_path)
+        for page_num in range(total_pages):  # Page numbers are 0-indexed
+            # Create a temporary single-page PDF
+            writer = PyPDF2.PdfWriter()
+            writer.add_page(reader.pages[page_num])
+            single_page_path = os.path.join(temp_folder, f"page_{page_num + 1}.pdf")
+            
+            with open(single_page_path, 'wb') as temp_pdf:
+                writer.write(temp_pdf)
+
+            # Process single-page PDF
+            ocrmypdf.ocr(single_page_path, single_page_path.replace('.pdf', '_ocr.pdf'))
+
+            # Track progress for the current page
+            ocr_progress = ((page_num + 1) / total_pages) * 100
+            progress[session_id]['ocr_progress'] = ocr_progress
+            progress[session_id]['filename'] = filename
+
+        # Combine all processed pages into one PDF
+        with open(output_path, 'wb') as output_pdf:
+            writer = PyPDF2.PdfWriter()
+            for page_num in range(total_pages):
+                processed_page_path = os.path.join(temp_folder, f"page_{page_num + 1}_ocr.pdf")
+                with open(processed_page_path, 'rb') as processed_pdf:
+                    reader = PyPDF2.PdfReader(processed_pdf)
+                    writer.add_page(reader.pages[0])
+            writer.write(output_pdf)
+
         processed_files.append(output_path)
 
-        # Update progress after processing
-        progress[session_id] = {'percent': ((i + 1) / total_files) * 100, 'filename': filename}
+        # Update the overall progress after processing the file
+        progress[session_id] = {
+            'percent': ((i + 1) / total_files) * 100,
+            'filename': filename,
+            'ocr_progress': 100
+        }
 
     # Create a zip file with the processed PDFs
     zip_filename = 'processed_pdfs.zip'
@@ -48,7 +78,11 @@ def process_pdfs(session_id, uploaded_file_paths):
             zipf.write(processed_file, os.path.basename(processed_file))
 
     # Mark progress as complete
-    progress[session_id] = {'percent': 100, 'filename': 'All files processed'}
+    progress[session_id] = {
+        'percent': 100,
+        'filename': 'All files processed',
+        'ocr_progress': 100
+    }
 
 @app.route('/')
 def index():

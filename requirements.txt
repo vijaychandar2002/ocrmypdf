@@ -1,4 +1,4 @@
 ocrmypdf
 Flask
 PyPDF2
-azure-storage-blob
+gunicorn

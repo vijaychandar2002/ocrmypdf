@@ -8,11 +8,14 @@ import uuid
 import PyPDF2
 import tempfile
 import shutil
+import logging
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
-app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['PROCESSED_FOLDER'] = 'processed'
+app.secret_key = os.getenv('SECRET_KEY', 'your_secret_key')
+
+# Use /home as it is writable on Azure App Services
+app.config['UPLOAD_FOLDER'] = '/home/tmp/uploads'
+app.config['PROCESSED_FOLDER'] = '/home/tmp/processed'
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -42,7 +45,7 @@ def process_pdfs(session_id, uploaded_file_paths, language_flag):
 
         filename = os.path.basename(file_path)
         output_path = os.path.join(app.config['PROCESSED_FOLDER'], filename)
-        temp_folder = tempfile.mkdtemp()
+        temp_folder = tempfile.mkdtemp(dir=app.config['PROCESSED_FOLDER'])
 
         reader = PyPDF2.PdfReader(file_path)
         total_pages = len(reader.pages)
@@ -167,4 +170,12 @@ def partial_download(session_id):
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    port = int(os.environ.get('PORT', 80))
+    app.run(debug=True, host='0.0.0.0', port=port)
+
+if __name__ != '__main__':
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
+
+app.logger.info('App started')

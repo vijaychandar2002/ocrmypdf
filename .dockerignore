@@ -1,0 +1,17 @@
+# Ignore the Python cache directory
+__pycache__/
+
+# Ignore the 'uploads' directory
+uploads/
+
+# Ignore the 'processed' directory
+processed/
+
+# Ignore the 'docker-build' directory
+docker-build/
+
+# Ignore the README file
+README.md
+
+# Ignore the .dockerignore file itself
+.dockerignore

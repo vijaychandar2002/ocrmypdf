@@ -30,7 +30,7 @@
     <div class="container">
         <h1>Upload PDFs for OCR</h1>
         <form action="/upload" method="POST" enctype="multipart/form-data" onsubmit="return validateLanguageSelection()">
-            <input type="file" name="file[]" multiple accept="application/pdf">
+            <input type="file" name="file[]" multiple accept="application/pdf" required>
             <div class="tooltip">
                 <span>ⓘ</span>
                 <span class="tooltiptext">The total size of all PDFs combined must be less than 100MB.</span>
@@ -39,6 +39,7 @@
             <label><input type="checkbox" name="languages" value="eng" checked> English</label>
             <label><input type="checkbox" name="languages" value="guj"> Gujarati</label>
             <label><input type="checkbox" name="languages" value="hin"> Hindi</label>
+            <label><input type="checkbox" name="languages" value="san"> Sanskrit</label>
             <div class="tooltip">
                 <span>ⓘ</span>
                 <span class="tooltiptext">Selecting more languages than necessary may slow down processing.</span>

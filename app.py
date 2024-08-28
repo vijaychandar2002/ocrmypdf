@@ -7,6 +7,7 @@ from threading import Thread
 import uuid
 import PyPDF2
 import tempfile
+import shutil
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -17,9 +18,8 @@ app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['PROCESSED_FOLDER'], exist_ok=True)
 
-progress = {}  # To track progress of each session
-stop_signals = {}  # To handle stop signals for each session
-
+progress = {}
+stop_signals = {}
 
 def process_pdfs(session_id, uploaded_file_paths, language_flag):
     processed_files = []
@@ -34,11 +34,11 @@ def process_pdfs(session_id, uploaded_file_paths, language_flag):
         'total_pages': 0
     }
     
-    stop_signals[session_id] = False  # Initialize stop signal for this session
+    stop_signals[session_id] = False
 
     for i, file_path in enumerate(uploaded_file_paths):
         if stop_signals[session_id]:
-            break  # Stop processing if stop signal is received
+            break
 
         filename = os.path.basename(file_path)
         output_path = os.path.join(app.config['PROCESSED_FOLDER'], filename)
@@ -52,9 +52,9 @@ def process_pdfs(session_id, uploaded_file_paths, language_flag):
         progress[session_id]['current_file_index'] = i
         progress[session_id]['pages_done'] = 0
 
-        for page_num in range(total_pages):  
+        for page_num in range(total_pages):
             if stop_signals[session_id]:
-                break  # Stop processing if stop signal is received
+                break
 
             writer = PyPDF2.PdfWriter()
             writer.add_page(reader.pages[page_num])
@@ -63,11 +63,9 @@ def process_pdfs(session_id, uploaded_file_paths, language_flag):
             with open(single_page_path, 'wb') as temp_pdf:
                 writer.write(temp_pdf)
 
-            # Use the language flag in the OCR command
             ocrmypdf.ocr(single_page_path, single_page_path.replace('.pdf', '_ocr.pdf'), language=language_flag)
 
-            ocr_progress = ((page_num + 1) / total_pages) * 100
-            progress[session_id]['ocr_progress'] = ocr_progress
+            progress[session_id]['ocr_progress'] = ((page_num + 1) / total_pages) * 100
             progress[session_id]['pages_done'] = page_num + 1
 
         if not stop_signals[session_id]:
@@ -81,24 +79,21 @@ def process_pdfs(session_id, uploaded_file_paths, language_flag):
                 writer.write(output_pdf)
 
             processed_files.append(output_path)
+            progress[session_id]['percent'] = ((i + 1) / total_files) * 100
 
-            progress[session_id] = {
-                'percent': ((i + 1) / total_files) * 100,
-                'filename': filename,
-                'ocr_progress': 100,
-                'current_file_index': i,
-                'total_files': total_files,
-                'pages_done': total_pages,
-                'total_pages': total_pages
-            }
+        shutil.rmtree(temp_folder)
 
-    zip_filename = 'processed_pdfs.zip'
-    zip_filepath = os.path.join(app.config['PROCESSED_FOLDER'], zip_filename)
-    with zipfile.ZipFile(zip_filepath, 'w') as zipf:
-        for processed_file in processed_files:
-            zipf.write(processed_file, os.path.basename(processed_file))
+    if processed_files:
+        zip_filename = 'processed_pdfs.zip'
+        zip_filepath = os.path.join(app.config['PROCESSED_FOLDER'], zip_filename)
+        with zipfile.ZipFile(zip_filepath, 'w') as zipf:
+            for processed_file in processed_files:
+                zipf.write(processed_file, os.path.basename(processed_file))
+                os.remove(processed_file)
 
-    progress[session_id]['percent'] = 100
+        progress[session_id]['percent'] = 100
+    else:
+        progress[session_id]['percent'] = 0
 
 @app.route('/')
 def index():
@@ -112,11 +107,9 @@ def upload():
     uploaded_files = request.files.getlist("file[]")
     selected_languages = request.form.getlist('languages')
 
-    # Ensure at least one language is selected
     if not selected_languages:
         return "Please select at least one language.", 400
 
-    # Prepare language flag for OCRmyPDF
     language_flag = '+'.join(selected_languages)
     uploaded_file_paths = []
 
@@ -134,6 +127,8 @@ def upload():
 
 @app.route('/progress/<session_id>')
 def progress_page(session_id):
+    if progress.get(session_id, {}).get('percent', 0) == 100:
+        return redirect(url_for('download', session_id=session_id))
     return render_template('progress.html', session_id=session_id)
 
 @app.route('/status/<session_id>')
@@ -142,22 +137,34 @@ def status(session_id):
 
 @app.route('/stop/<session_id>', methods=['POST'])
 def stop(session_id):
-    stop_signals[session_id] = True  # Set stop signal
+    stop_signals[session_id] = True
     return jsonify({'status': 'stopped'})
 
 @app.route('/download/<session_id>')
 def download(session_id):
     zip_filepath = os.path.join(app.config['PROCESSED_FOLDER'], 'processed_pdfs.zip')
+    files_processed = progress.get(session_id, {}).get('percent', 0)
 
-    # Check if the processing was stopped before any PDF was completed
-    if progress.get(session_id, {}).get('percent', 0) == 0:
-        return "No files were processed. Please try again."
+    if files_processed == 0:
+        return redirect(url_for('index'))
+
+    if files_processed < 100:
+        return render_template('partial_download.html', session_id=session_id)
 
     if os.path.exists(zip_filepath):
         return send_file(zip_filepath, as_attachment=True)
     
-    return "No file available for download."
+    return redirect(url_for('index'))
 
+@app.route('/partial-download/<session_id>', methods=['POST'])
+def partial_download(session_id):
+    download_choice = request.form.get('download_choice')
+    zip_filepath = os.path.join(app.config['PROCESSED_FOLDER'], 'processed_pdfs.zip')
+
+    if download_choice == 'yes' and os.path.exists(zip_filepath):
+        return send_file(zip_filepath, as_attachment=True)
+    
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')

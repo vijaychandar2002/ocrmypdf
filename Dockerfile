@@ -15,7 +15,7 @@ COPY gs-9540-linux-x86_64 /usr/local/bin/gs
 
 # Install Tesseract with additional languages
 RUN apt-get update && \
-    apt-get install -y tesseract-ocr tesseract-ocr-guj tesseract-ocr-hin
+    apt-get install -y tesseract-ocr tesseract-ocr-guj tesseract-ocr-hin tesseract-ocr-san
 
 # Expose port 80 for the app to run on
 EXPOSE 80

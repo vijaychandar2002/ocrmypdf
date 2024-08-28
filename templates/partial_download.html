@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partial Download</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Partial Download Available</h1>
+        <p>The OCR processing was stopped before all PDFs were completed.</p>
+        <p>Do you want to download the processed files so far?</p>
+        
+        <form action="{{ url_for('partial_download', session_id=session_id) }}" method="POST">
+            <button type="submit" name="download_choice" value="yes">Yes, download</button>
+            <button type="submit" name="download_choice" value="no">No, return to home</button>
+        </form>
+    </div>
+</body>
+</html>

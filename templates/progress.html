@@ -10,13 +10,26 @@
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('progress-bar').value = data.percent;
-                    document.getElementById('progress-text').innerText = `Progress: ${data.percent.toFixed(2)}%`;
+                    document.getElementById('progress-text').innerText = `Overall Progress: ${data.percent.toFixed(2)}% (${data.current_file_index + 1}/${data.total_files} PDFs)`;
                     document.getElementById('current-file').innerText = `Processing: ${data.filename}`;
-                    document.getElementById('ocr-progress').innerText = `OCR Progress: ${data.ocr_progress.toFixed(2)}%`;
+                    document.getElementById('ocr-progress').innerText = `OCR Progress for current PDF: ${data.ocr_progress.toFixed(2)}% (${data.pages_done}/${data.total_pages} pages)`;
+                    document.getElementById('ocr-progress-bar').value = data.ocr_progress;
 
                     if (data.percent < 100) {
                         setTimeout(updateProgress, 1000);  // Update every 1 second
                     } else {
+                        document.getElementById('download-link').style.display = 'block';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function stopProcessing() {
+            fetch(`/stop/{{ session_id }}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'stopped') {
+                        alert('Processing stopped. You can now download the processed files.');
                         document.getElementById('download-link').style.display = 'block';
                     }
                 })
@@ -31,9 +44,11 @@
 <body>
     <h1>Processing Progress</h1>
     <progress id="progress-bar" value="0" max="100"></progress>
-    <p id="progress-text">Progress: 0%</p>
+    <p id="progress-text">Overall Progress: 0%</p>
     <p id="current-file">Processing: No file</p>
-    <p id="ocr-progress">OCR Progress: 0%</p>
+    <progress id="ocr-progress-bar" value="0" max="100"></progress>
+    <p id="ocr-progress">OCR Progress for current PDF: 0% (0/0 pages)</p>
+    <button onclick="stopProcessing()">Stop</button>
     <a id="download-link" href="/download/{{ session_id }}" style="display: none;">Download Processed PDFs</a>
 </body>
 </html>

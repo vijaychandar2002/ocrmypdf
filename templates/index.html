@@ -7,16 +7,14 @@
     <link rel="stylesheet" href="/static/css/styles.css">
     <script>
         function validateLanguageSelection() {
-            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const checkboxes = document.querySelectorAll('input[name="languages"]');
             const checkedCount = Array.from(checkboxes).filter(checkbox => checkbox.checked).length;
-            
-            // Ensure at least one checkbox is checked
+
             if (checkedCount === 0) {
                 alert('Please select at least one language.');
                 return false;
             }
 
-            // Ensure no more than three checkboxes are checked
             if (checkedCount > 3) {
                 alert('You can select a maximum of three languages.');
                 return false;
@@ -24,12 +22,28 @@
 
             return true;
         }
+
+        function validateOCRSelection() {
+            const ocrOptions = document.querySelectorAll('input[name="ocr_option"]');
+            const checkedCount = Array.from(ocrOptions).filter(option => option.checked).length;
+
+            if (checkedCount === 0) {
+                alert('Please select at least one OCR processing option.');
+                return false;
+            }
+
+            return true;
+        }
+
+        function validateForm() {
+            return validateLanguageSelection() && validateOCRSelection();
+        }
     </script>
 </head>
 <body>
     <div class="container">
         <h1>Upload PDFs for OCR</h1>
-        <form action="/upload" method="POST" enctype="multipart/form-data" onsubmit="return validateLanguageSelection()">
+        <form action="/upload" method="POST" enctype="multipart/form-data" onsubmit="return validateForm()">
             <input type="file" name="file[]" multiple accept="application/pdf" required>
             <div class="tooltip">
                 <span>ⓘ</span>
@@ -46,7 +60,26 @@
                 <span class="tooltiptext">Selecting more languages than necessary may slow down processing.</span>
             </div>
             <br><br>
+
             <h2>Advanced Configurations</h2>
+
+            <label><input type="radio" name="ocr_option" value="skip" checked> Skip Text (Default)</label>
+            <div class="tooltip">
+                <span>ⓘ</span>
+                <span class="tooltiptext">Skip OCR on pages with existing text. Text pages will be copied without modification.</span>
+            </div>
+            <label><input type="radio" name="ocr_option" value="force"> Force OCR</label>
+            <div class="tooltip">
+                <span>ⓘ</span>
+                <span class="tooltiptext">Rasterize all vector content and run OCR on the images. Useful if a previous OCR attempt failed or if there are text watermarks.</span>
+            </div>
+            <label><input type="radio" name="ocr_option" value="redo"> Redo OCR</label>
+            <div class="tooltip">
+                <span>ⓘ</span>
+                <span class="tooltiptext">Remove existing OCR (non-printing text) and redo OCR. Excludes printable vector text from OCR.</span>
+            </div>
+            <br><br>
+            
             <label for="skip_big">Skip Big Images(MB):</label>
             <input type="number" id="skip_big" name="skip_big" min="0" value="50">
             <div class="tooltip">

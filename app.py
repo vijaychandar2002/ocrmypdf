@@ -11,11 +11,15 @@ import shutil
 import logging
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'your_secret_key')
+app.secret_key = os.getenv('SECRET_KEY', 'secret_key')
 
 # Use /home as it is writable on Azure App Services
 app.config['UPLOAD_FOLDER'] = '/home/tmp/uploads'
 app.config['PROCESSED_FOLDER'] = '/home/tmp/processed'
+
+# app.config['UPLOAD_FOLDER'] = '/home/tmp/uploads'
+# app.config['PROCESSED_FOLDER'] = '/home/tmp/processed'
+
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -24,7 +28,7 @@ os.makedirs(app.config['PROCESSED_FOLDER'], exist_ok=True)
 progress = {}
 stop_signals = {}
 
-def process_pdfs(session_id, uploaded_file_paths, language_flag):
+def process_pdfs(session_id, uploaded_file_paths, language_flag, skip_big, optimize):
     processed_files = []
     total_files = len(uploaded_file_paths)
     progress[session_id] = {
@@ -66,7 +70,14 @@ def process_pdfs(session_id, uploaded_file_paths, language_flag):
             with open(single_page_path, 'wb') as temp_pdf:
                 writer.write(temp_pdf)
 
-            ocrmypdf.ocr(single_page_path, single_page_path.replace('.pdf', '_ocr.pdf'), language=language_flag)
+            ocrmypdf.ocr(
+                single_page_path, 
+                single_page_path.replace('.pdf', '_ocr.pdf'), 
+                language=language_flag, 
+                skip_text=True, 
+                skip_big=int(skip_big),  
+                optimize=int(optimize)  
+            )
 
             progress[session_id]['ocr_progress'] = ((page_num + 1) / total_pages) * 100
             progress[session_id]['pages_done'] = page_num + 1
@@ -98,6 +109,7 @@ def process_pdfs(session_id, uploaded_file_paths, language_flag):
     else:
         progress[session_id]['percent'] = 0
 
+
 @app.route('/')
 def index():
     session_id = str(uuid.uuid4())
@@ -109,6 +121,8 @@ def upload():
     session_id = session.get('session_id')
     uploaded_files = request.files.getlist("file[]")
     selected_languages = request.form.getlist('languages')
+    skip_big = request.form.get('skip_big', 50)
+    optimize = request.form.get('optimize', 0)
 
     if not selected_languages:
         return "Please select at least one language.", 400
@@ -123,7 +137,7 @@ def upload():
             file.save(file_path)
             uploaded_file_paths.append(file_path)
 
-    thread = Thread(target=process_pdfs, args=(session_id, uploaded_file_paths, language_flag))
+    thread = Thread(target=process_pdfs, args=(session_id, uploaded_file_paths, language_flag, skip_big, optimize))
     thread.start()
 
     return redirect(url_for('progress_page', session_id=session_id))

@@ -36,6 +36,7 @@
                 <span class="tooltiptext">The total size of all PDFs combined must be less than 100MB.</span>
             </div>
             <br><br>
+            <h2>Select Document Languages</h2>
             <label><input type="checkbox" name="languages" value="eng" checked> English</label>
             <label><input type="checkbox" name="languages" value="guj"> Gujarati</label>
             <label><input type="checkbox" name="languages" value="hin"> Hindi</label>
@@ -45,8 +46,25 @@
                 <span class="tooltiptext">Selecting more languages than necessary may slow down processing.</span>
             </div>
             <br><br>
+            <h2>Advanced Configurations</h2>
+            <label for="skip_big">Skip Big Images(MB):</label>
+            <input type="number" id="skip_big" name="skip_big" min="0" value="50">
+            <div class="tooltip">
+                <span>ⓘ</span>
+                <span class="tooltiptext">Skips images larger than the specified MB size.</span>
+            </div>
+            <br><br>
+        
+            <label for="optimize">Optimize Level (0-3):</label>
+            <input type="number" id="optimize" name="optimize" min="0" max="3" value="0">
+            <div class="tooltip">
+                <span>ⓘ</span>
+                <span class="tooltiptext">Set optimization level (0-3). Higher values result in more optimized PDFs but slower processing time.</span>
+            </div>
+            <br><br>
+        
             <button type="submit">Upload and Process</button>
-        </form>
+        </form>        
     </div>
 </body>
 </html>

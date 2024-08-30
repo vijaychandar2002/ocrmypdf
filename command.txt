@@ -1,0 +1,12 @@
+source venv/bin/activate
+
+sudo chmod +x /workspaces/ocr-my-pdf/gs-9540-linux-x86_64
+sudo mv /workspaces/ocr-my-pdf/gs-9540-linux-x86_64 /usr/local/bin/gs
+
+
+sudo apt-get update
+sudo apt-get install -y tesseract-ocr
+sudo apt-get install -y  tesseract-ocr-guj tesseract-ocr-hin tesseract-ocr-san
+
+gs --version  # Should return the Ghostscript version
+tesseract --version  # Should return the Tesseract version

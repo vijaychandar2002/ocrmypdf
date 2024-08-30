@@ -110,7 +110,6 @@ def process_pdfs(session_id, uploaded_file_paths, language_flag, skip_big, optim
     else:
         progress[session_id]['percent'] = 0
 
-
 @app.route('/')
 def index():
     session_id = str(uuid.uuid4())

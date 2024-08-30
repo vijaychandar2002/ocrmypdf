@@ -1,4 +1,4 @@
-#!/workspaces/ocr-my-pdf/env/bin/python
+#!/workspaces/ocrmypdf/ocr-my-pdf/env/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

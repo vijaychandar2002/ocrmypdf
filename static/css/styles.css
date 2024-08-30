@@ -49,14 +49,16 @@ button:hover {
 }
 
 /* Form Styles */
+/* Remove these styles for forms */
 form {
     max-width: 600px;
     margin: 0 auto;
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 0; /* Removed padding */
+    background: none; /* Removed background */
+    border-radius: 0; /* Removed border-radius */
+    box-shadow: none; /* Removed shadow */
 }
+
 
 input[type="file"] {
     margin-bottom: 20px;

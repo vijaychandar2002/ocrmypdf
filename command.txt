@@ -1,7 +1,7 @@
-source venv/bin/activate
+source env/bin/activate
 
-sudo chmod +x /workspaces/ocr-my-pdf/gs-9540-linux-x86_64
-sudo mv /workspaces/ocr-my-pdf/gs-9540-linux-x86_64 /usr/local/bin/gs
+sudo chmod +x /workspaces/ocrmypdf/ocr-my-pdf/gs-9540-linux-x86_64
+sudo mv /workspaces/ocrmypdf/ocr-my-pdf/gs-9540-linux-x86_64 /usr/local/bin/gs
 
 
 sudo apt-get update

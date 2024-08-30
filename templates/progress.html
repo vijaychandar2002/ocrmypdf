@@ -15,16 +15,21 @@
                     document.getElementById('current-file').innerText = `Processing: ${data.filename}`;
                     document.getElementById('ocr-progress').innerText = `OCR Progress for current PDF: ${data.ocr_progress.toFixed(2)}% (${data.pages_done}/${data.total_pages} pages)`;
                     document.getElementById('ocr-progress-bar').value = data.ocr_progress;
-
+    
                     if (data.percent < 100) {
                         setTimeout(updateProgress, 1000);
                     } else {
-                        window.location.href = `/download/{{ session_id }}`;
+                        // Replace the Stop button with Download and Start New OCR buttons
+                        const buttonContainer = document.getElementById('button-container');
+                        buttonContainer.innerHTML = `
+                            <button onclick="window.location.href='/download/{{ session_id }}'">Download</button>
+                            <button onclick="window.location.href='/'">Start New OCR</button>
+                        `;
                     }
                 })
                 .catch(error => console.error('Error:', error));
         }
-
+    
         function stopProcessing() {
             fetch(`/stop/{{ session_id }}`, { method: 'POST' })
                 .then(response => response.json())
@@ -35,11 +40,11 @@
                 })
                 .catch(error => console.error('Error:', error));
         }
-
+    
         window.onload = function() {
             updateProgress();
         };
-    </script>
+    </script>    
 </head>
 <body>
     <div class="container">
@@ -49,7 +54,10 @@
         <p id="current-file">Processing: No file</p>
         <progress id="ocr-progress-bar" value="0" max="100"></progress>
         <p id="ocr-progress">OCR Progress for current PDF: 0%</p>
-        <button id="stop-button" onclick="stopProcessing()">Stop Processing</button>
+        <div id="button-container">
+            <button id="stop-button" onclick="stopProcessing()">Stop Processing</button>
+        </div>
+        
     </div>
 </body>
 </html>

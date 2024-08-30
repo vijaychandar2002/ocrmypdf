@@ -1,4 +1,4 @@
-#!/workspaces/ocr-my-pdf/env/bin/python
+#!/workspaces/ocrmypdf/ocr-my-pdf/env/bin/python
 """Extract pdf structure in XML format"""
 import logging
 import os.path
